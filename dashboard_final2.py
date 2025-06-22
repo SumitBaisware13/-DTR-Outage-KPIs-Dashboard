@@ -75,13 +75,9 @@ d = dtr_info[dtr_selection]
 # --- LOAD DATA ---
 try:
     master_all = pd.read_excel(d['master_file'], sheet_name=d['master_sheet'])
-except Exception as e:
-    st.error(f"Error loading master: {e}")
-    st.stop()
-try:
     master = master_all[(master_all['dtrcode'] == int(d['dtr'])) & (master_all['Feedercode'] == int(d['feeder']))]
 except Exception as e:
-    st.error(f"Error filtering master: {e}")
+    st.error(f"Error loading or filtering master: {e}")
     st.stop()
 try:
     outage = pd.read_excel(d['outage_file'], sheet_name=d['outage_sheet'])
@@ -201,15 +197,21 @@ with st.expander("Wrongly Mapped (Other DTR, Same Feeder)"):
 consumption_file = consumption_files.get(dtr_selection)
 if consumption_file and os.path.exists(consumption_file):
     df_cons = pd.read_excel(consumption_file, sheet_name=0)
-    # Column detection (case insensitive)
-    date_col = next((c for c in df_cons.columns if "date" in c.lower()), None)
-    meter_col = next((c for c in df_cons.columns if "meter_count" in c.lower() or "meter count" in c.lower()), None)
-    loss_col = next((c for c in df_cons.columns if "loss" in c.lower()), None)
+    # Smart column name search
+    def smart_col_search(df, search_words):
+        for col in df.columns:
+            name = col.lower().replace(' ', '').replace('_', '')
+            if all(word in name for word in search_words):
+                return col
+        return None
+
+    date_col = smart_col_search(df_cons, ['date'])
+    meter_col = smart_col_search(df_cons, ['meter', 'count'])
+    loss_col = smart_col_search(df_cons, ['loss'])
+
     if date_col and meter_col and loss_col:
-            
-        # Remove time from date
         df_cons[date_col] = pd.to_datetime(df_cons[date_col]).dt.date
-        # Line Chart
+
         st.markdown("### 📈 Meter Count and Loss % Trend (Daily)")
         fig2 = go.Figure()
         fig2.add_trace(go.Scatter(
@@ -220,32 +222,35 @@ if consumption_file and os.path.exists(consumption_file):
             x=df_cons[date_col], y=df_cons[loss_col],
             mode='lines+markers', name='%Loss_DLP', line=dict(color='orange', width=3), yaxis='y2'
         ))
-        # Dual y-axis
+        # Add yaxis2 explicitly to the layout (Cloud safe!)
+        fig2.layout['yaxis2'] = dict(
+            title='%Loss_DLP',
+            titlefont=dict(color='orange'),
+            tickfont=dict(color='orange'),
+            anchor='x',
+            overlaying='y',
+            side='right'
+        )
         fig2.update_layout(
             xaxis_title="Date",
-            yaxis=dict(title="Meter Count", titlefont=dict(color='green'), tickfont=dict(color='green')),
-            yaxis2=dict(title="%Loss_DLP", titlefont=dict(color='orange'), tickfont=dict(color='orange'),
-                        anchor="x", overlaying="y", side="right"),
-            legend=dict(x=0.5, y=1.1, orientation='h', xanchor='center'),
-            plot_bgcolor='#282828',
-            paper_bgcolor='#282828',
-            font=dict(color='#f5f6fa'),
-            title=f"{dtr_selection} Meter Count and Loss % Trend"
+            yaxis_title="Meter Count",
+            title=f"{dtr_selection} Meter Count and Loss % Trend",
+            legend=dict(x=0.5, y=1.1, orientation='h', xanchor='center')
         )
         st.plotly_chart(fig2, use_container_width=True)
-        
+
         # Table below chart
         st.markdown("#### 📋 Daily Meter Count & Loss % Table")
         table_df = df_cons[[date_col, meter_col, loss_col]].copy()
         table_df.columns = ['Date', 'Meter Count', '%Loss_DLP']  # Clean labels
         st.dataframe(table_df, use_container_width=True)
     else:
-        st.info("Consumption file found but required columns (`date`, `meter_count`, `%Loss_DLP`) not detected.")
+        st.info(f"Consumption file found but required columns not detected. Columns found: {df_cons.columns.tolist()}")
 else:
     st.info("No consumption file found for this DTR. (Expected file: {})".format(consumption_file if consumption_file else "N/A"))
 
 st.markdown("""
     <div style='text-align:center;margin-top:24px;font-size:17px;color:#7f8c8d;'>
-        🚀 <b>Power Analytics Dashboard</b> | <i>Esyasoft</i>
+        🚀 <b>Power Analytics Dashboard</b> | <i>Sheet-driven, Business-defined KPIs and Loss Trend</i>
     </div>
 """, unsafe_allow_html=True)
