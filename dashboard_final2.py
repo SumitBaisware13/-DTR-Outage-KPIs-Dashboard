@@ -192,7 +192,7 @@ with st.expander("Wrongly Mapped (Other DTR, Same Feeder)"):
         file_name=f"{selected_feeder}-{selected_dtr}_wrongly_mapped.csv",
         mime="text/csv"
     )
-
+consumption_file = consumption_files.get(dtr_selection)
 # --------- CONSUMPTION TREND PLOT (ALWAYS FIRST SHEET) ---------
 if consumption_file and os.path.exists(consumption_file):
     df_cons = pd.read_excel(consumption_file, sheet_name=0)
