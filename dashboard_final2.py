@@ -222,18 +222,19 @@ if consumption_file and os.path.exists(consumption_file):
             x=df_cons[date_col], y=df_cons[loss_col],
             mode='lines+markers', name='%Loss_DLP', line=dict(color='orange', width=3), yaxis='y2'
         ))
-        # Add yaxis2 explicitly to the layout (Cloud safe!)
-        fig2.layout['yaxis2'] = dict(
-            title='%Loss_DLP',
-            titlefont=dict(color='orange'),
-            tickfont=dict(color='orange'),
-            anchor='x',
-            overlaying='y',
-            side='right'
-        )
+
+        # Correct dual y-axis assignment (Cloud-safe)
         fig2.update_layout(
             xaxis_title="Date",
-            yaxis_title="Meter Count",
+            yaxis=dict(title="Meter Count", titlefont=dict(color='green'), tickfont=dict(color='green')),
+            yaxis2=dict(
+                title='%Loss_DLP',
+                titlefont=dict(color='orange'),
+                tickfont=dict(color='orange'),
+                anchor='x',
+                overlaying='y',
+                side='right'
+            ),
             title=f"{dtr_selection} Meter Count and Loss % Trend",
             legend=dict(x=0.5, y=1.1, orientation='h', xanchor='center')
         )
