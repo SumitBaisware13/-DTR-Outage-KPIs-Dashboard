@@ -194,7 +194,6 @@ with st.expander("Wrongly Mapped (Other DTR, Same Feeder)"):
     )
 
 # --------- CONSUMPTION TREND PLOT (ALWAYS FIRST SHEET) ---------
-consumption_file = consumption_files.get(dtr_selection)
 if consumption_file and os.path.exists(consumption_file):
     df_cons = pd.read_excel(consumption_file, sheet_name=0)
     # Smart column name search
@@ -223,23 +222,19 @@ if consumption_file and os.path.exists(consumption_file):
             mode='lines+markers', name='%Loss_DLP', line=dict(color='orange', width=3), yaxis='y2'
         ))
 
-        # Correct dual y-axis assignment (Cloud-safe)
         fig2.update_layout(
             xaxis_title="Date",
-            yaxis=dict(title="Meter Count", titlefont=dict(color='green'), tickfont=dict(color='green')),
+            yaxis=dict(title="Meter Count"),
             yaxis2=dict(
-                title='%Loss_DLP',
-                titlefont=dict(color='orange'),
-                tickfont=dict(color='orange'),
-                anchor='x',
-                overlaying='y',
-                side='right'
+                title="%Loss_DLP",
+                anchor="x",
+                overlaying="y",
+                side="right"
             ),
             title=f"{dtr_selection} Meter Count and Loss % Trend",
             legend=dict(x=0.5, y=1.1, orientation='h', xanchor='center')
         )
         st.plotly_chart(fig2, use_container_width=True)
-
         # Table below chart
         st.markdown("#### 📋 Daily Meter Count & Loss % Table")
         table_df = df_cons[[date_col, meter_col, loss_col]].copy()
