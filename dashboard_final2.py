@@ -247,6 +247,6 @@ else:
 
 st.markdown("""
     <div style='text-align:center;margin-top:24px;font-size:17px;color:#7f8c8d;'>
-        🚀 <b>Power Analytics Dashboard</b> | <i>Sheet-driven, Business-defined KPIs and Loss Trend</i>
+        🚀 <b>Power Analytics Dashboard</b> | <i>Esyasoft</i>
     </div>
 """, unsafe_allow_html=True)
